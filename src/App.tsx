@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import BooksPage from './pages/BooksPage'
@@ -15,15 +16,19 @@ function App() {
   return (
     <Routes>
       <Route
+        path="/"
+        element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+      />
+      <Route
         path="/login"
-        element={session ? <Navigate to="/" replace /> : <LoginPage />}
+        element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
       />
       <Route
         path="/register"
-        element={session ? <Navigate to="/" replace /> : <RegisterPage />}
+        element={session ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
       />
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <BooksPage />
