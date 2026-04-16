@@ -21,7 +21,7 @@ export default function LandingPage() {
             Dari naskah hingga buku jadi — kami siap menjadi mitra penerbitan Anda.
           </p>
           <div className="landing-hero-actions">
-            <Link to="/login" className="landing-btn-primary">Masuk ke Dashboard</Link>
+            <Link to="/dashboard" className="landing-btn-primary">Masuk ke Dashboard</Link>
             <Link to="/register" className="landing-btn-secondary">Buat Akun</Link>
           </div>
         </div>
