@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Book } from '../types/book'
@@ -24,7 +25,8 @@ const emptyBook: Omit<Book, 'id' | 'created_at'> = {
 }
 
 export default function BooksPage() {
-  const { signOut } = useAuth()
+  const { session, signOut } = useAuth()
+  const isLoggedIn = !!session
   const [books, setBooks] = useState<Book[]>([])
   const [form, setForm] = useState(emptyBook)
   const [editing, setEditing] = useState<string | null>(null)
@@ -215,7 +217,11 @@ export default function BooksPage() {
               <p className="topbar-tagline">Penerbitan dan Percetakan</p>
             </div>
           </div>
-          <button className="btn-signout" onClick={signOut}>Keluar</button>
+          {isLoggedIn ? (
+            <button className="btn-signout" onClick={signOut}>Keluar</button>
+          ) : (
+            <Link to="/login" className="btn-signout" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Masuk</Link>
+          )}
         </div>
       </header>
 
@@ -234,7 +240,7 @@ export default function BooksPage() {
             ) : (
               <ul className="panel-list">
                 {books.map(b => (
-                  <li key={b.id} className={editing === b.id ? 'catalogue-active' : ''} onClick={() => handleEdit(b)} style={{ cursor: 'pointer' }}>
+                  <li key={b.id} className={editing === b.id ? 'catalogue-active' : ''} onClick={() => isLoggedIn && handleEdit(b)} style={{ cursor: isLoggedIn ? 'pointer' : 'default' }}>
                     {b.cover_image_url
                       ? <img src={b.cover_image_url} alt="" className="panel-thumb" />
                       : <div className="panel-thumb-placeholder">📖</div>
@@ -253,7 +259,7 @@ export default function BooksPage() {
 
         {/* CENTER — FORM + BOOK LIST */}
         <div className="main-center">
-          {showForm && (
+          {showForm && isLoggedIn && (
           <section className="form-section">
             <div className="section-header">
               <span className="section-header-icon">📖</span>
@@ -506,7 +512,7 @@ export default function BooksPage() {
               <span className="section-header-icon">📚</span>
               <h2>Daftar Buku</h2>
               <span className="books-count">{books.length}</span>
-              {!showForm && (
+              {!showForm && isLoggedIn && (
                 <button className="btn-small" onClick={() => { setEditing(null); setForm(emptyBook); setCoverPreview(null); setShowForm(true) }}>+ Tambah Buku</button>
               )}
             </div>
@@ -538,12 +544,14 @@ export default function BooksPage() {
                         {book.page_count && <span className="book-tag">{book.page_count} hal.</span>}
                       </div>
                     </div>
+                    {isLoggedIn && (
                     <div className="book-actions">
                       <button className="btn-small" onClick={() => handleEdit(book)}>Edit</button>
                       <button className="btn-small btn-danger" onClick={() => handleDelete(book.id!)}>
                         Hapus
                       </button>
                     </div>
+                    )}
                   </div>
                 ))}
               </div>

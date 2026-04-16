@@ -29,11 +29,7 @@ function App() {
       />
       <Route
         path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <BooksPage />
-          </ProtectedRoute>
-        }
+        element={<BooksPage />}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
