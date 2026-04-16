@@ -32,8 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
 
   const signOut = async () => {
-    await supabase.auth.signOut()
     navigate('/')
+    await supabase.auth.signOut()
   }
 
   return (
