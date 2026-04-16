@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0] — 2026-04-16
+
+### Changed
+- **Bahasa Indonesia**: Seluruh teks UI dialihbahasakan ke Bahasa Indonesia (label, tombol, pesan, panel, konfirmasi hapus)
+- **Form tersembunyi by default**: Halaman utama kini hanya menampilkan Daftar Buku; form muncul hanya saat klik "Tambah Buku" atau "Edit"
+- **Tombol "+ Tambah Buku"**: Ditampilkan di header Daftar Buku; tersembunyi saat form sedang terbuka
+- **Setelah simpan/batal**: Form otomatis tertutup dan kembali ke tampilan daftar
+
+## [0.2.0] — 2026-04-16
+
+### Changed
+- **3-column dashboard layout**: Left panel = Catalogue, Center = form + book list, Right panel = Best Sellers / Upcoming / Contacts / Online Shop
+- **Left panel — Catalogue**: Lists all books with cover thumbnail, author, and genre badge; clicking a book loads it into the edit form with active highlight
+- **Right panel**: Contains Best Sellers, Soon to be Published, Contacts, and Online Shop Directory cards
+- **Genre field**: Changed from free-text input to a `<select>` dropdown with 20 preset genre options
+- **Theme color**: Switched from amber/brown to purple (`#7c3aed` / `#8b5cf6`) across buttons, tags, focus rings, and auth accents
+- **Topbar**: Dark slate gradient background (`#1e293b → #334155`); gold-accented logo icon; simplified to brand icon + app name/tagline + Sign Out only
+- **Topbar alignment**: Brand and Sign Out button now constrained to same `max-width` + padding container as the 3-column panels so they align on all screen sizes
+- **Auth pages**: Card-logo branding (icon + app name) added to Login and Register pages
+- **Google Fonts**: Inter (UI) + Playfair Display (headings) loaded via `index.html`
+
 ## [0.1.0] — 2026-04-16
 
 ### Added

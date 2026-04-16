@@ -16,12 +16,12 @@ export default function RegisterPage() {
     setSuccess('')
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('Password tidak cocok')
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError('Password minimal 6 karakter')
       return
     }
 
@@ -32,7 +32,7 @@ export default function RegisterPage() {
     if (error) {
       setError(error.message)
     } else {
-      setSuccess('Account created! Check your email to confirm, then sign in.')
+      setSuccess('Akun berhasil dibuat! Cek email Anda untuk konfirmasi, lalu masuk.')
     }
 
     setLoading(false)
@@ -41,9 +41,11 @@ export default function RegisterPage() {
   return (
     <div className="page-center">
       <div className="card">
-        <h1>Create Account</h1>
-        <p className="subtitle">Register to start managing your books</p>
-
+        <div className="card-logo">
+          <div className="card-logo-icon">A</div>
+          <span className="card-logo-name">CV. Pionir Jaya</span>
+        </div>
+        <h1>Buat Akun</h1>
         <form onSubmit={handleRegister}>
           <div className="field">
             <label htmlFor="email">Email</label>
@@ -70,7 +72,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="field">
-            <label htmlFor="confirmPassword">Confirm Password</label>
+            <label htmlFor="confirmPassword">Konfirmasi Password</label>
             <input
               id="confirmPassword"
               type="password"
@@ -84,13 +86,13 @@ export default function RegisterPage() {
           {error && <p className="error">{error}</p>}
           {success && <p className="success">{success}</p>}
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
+          <button type="submit" disabled={loading} style={{width:'100%'}}>
+            {loading ? 'Membuat akun...' : 'Daftar'}
           </button>
         </form>
 
         <p className="auth-link">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Sudah punya akun? <Link to="/login">Masuk</Link>
         </p>
       </div>
     </div>

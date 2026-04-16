@@ -25,8 +25,11 @@ export default function LoginPage() {
   return (
     <div className="page-center">
       <div className="card">
-        <h1>Author Platform</h1>
-        <p className="subtitle">Sign in to manage your books</p>
+        <div className="card-logo">
+          <div className="card-logo-icon">PJ</div>
+          <span className="card-logo-name">CV. Pionir Jaya</span>
+        </div>
+        <h4>Masuk</h4>
 
         <form onSubmit={handleLogin}>
           <div className="field">
@@ -55,13 +58,13 @@ export default function LoginPage() {
 
           {error && <p className="error">{error}</p>}
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button type="submit" disabled={loading} style={{width:'100%'}}>
+            {loading ? 'Masuk...' : 'Masuk'}
           </button>
         </form>
 
         <p className="auth-link">
-          Don't have an account? <Link to="/register">Register</Link>
+          Belum punya akun? <Link to="/register">Daftar</Link>
         </p>
       </div>
     </div>
