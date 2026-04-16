@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Book } from '../types/book'
@@ -22,11 +21,11 @@ const emptyBook: Omit<Book, 'id' | 'created_at'> = {
   shopee_link: '',
   whatsapp_link: '',
   sales_link: '',
+  sales_count: undefined,
 }
 
 export default function BooksPage() {
-  const { session, signOut } = useAuth()
-  const isLoggedIn = !!session
+  const { signOut } = useAuth()
   const [books, setBooks] = useState<Book[]>([])
   const [form, setForm] = useState(emptyBook)
   const [editing, setEditing] = useState<string | null>(null)
@@ -36,6 +35,7 @@ export default function BooksPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [search, setSearch] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -99,6 +99,7 @@ export default function BooksPage() {
       shopee_link: form.shopee_link || null,
       whatsapp_link: form.whatsapp_link || null,
       sales_link: form.sales_link || null,
+      sales_count: form.sales_count ? Number(form.sales_count) : null,
     }
 
     if (editing) {
@@ -156,6 +157,7 @@ export default function BooksPage() {
       shopee_link: book.shopee_link || '',
       whatsapp_link: book.whatsapp_link || '',
       sales_link: book.sales_link || '',
+      sales_count: book.sales_count,
     })
     setCoverFile(null)
     setCoverPreview(book.cover_image_url || null)
@@ -199,67 +201,51 @@ export default function BooksPage() {
 
   const wordCount = (form.description || '').trim().split(/\s+/).filter(Boolean).length
 
-  const today = new Date().toISOString().split('T')[0]
-  const bestSellers = books.filter(b => !b.publication_date || b.publication_date <= today)
-  const upcoming = books.filter(b => b.publication_date && b.publication_date > today)
-  const withContact = books.filter(b => b.whatsapp_link)
-  const withShop = books.filter(b => b.tokopedia_link || b.shopee_link || b.sales_link)
+  const filteredBooks = books.filter(b => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return (
+      b.title.toLowerCase().includes(q) ||
+      b.author_name.toLowerCase().includes(q) ||
+      (b.genre || '').toLowerCase().includes(q) ||
+      (b.isbn || '').toLowerCase().includes(q)
+    )
+  })
 
   return (
-    <div className="dashboard">
-      {/* ===== TOPBAR ===== */}
+    <div className="manage">
+      {/* Topbar */}
       <header className="topbar">
         <div className="topbar-inner">
           <div className="topbar-brand">
             <div className="topbar-icon">PJ</div>
             <div>
-              <h1>CV. Pionir Jaya</h1>
-              <p className="topbar-tagline">Penerbitan dan Percetakan</p>
+              <h1>Kelola Buku</h1>
             </div>
           </div>
-          {isLoggedIn ? (
-            <button className="btn-signout" onClick={signOut}>Keluar</button>
-          ) : (
-            <Link to="/login" className="btn-signout" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Masuk</Link>
-          )}
+          <div className="topbar-search">
+            <input
+              type="text"
+              placeholder="Cari buku..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <button className="btn-signout" onClick={signOut}>Keluar</button>
         </div>
       </header>
 
-      {/* ===== 3-COLUMN LAYOUT ===== */}
-      <div className="layout-3col">
+      {/* Compact Content */}
+      <div className="manage-content">
+        <div className="manage-toolbar">
+          <span className="manage-count">{filteredBooks.length} buku</span>
+          {!showForm && (
+            <button className="btn-small" onClick={() => { setEditing(null); setForm(emptyBook); setCoverPreview(null); setShowForm(true) }}>+ Tambah Buku</button>
+          )}
+        </div>
 
-        {/* LEFT PANEL — CATALOGUE */}
-        <aside className="side-panel panel-left">
-          <div className="panel-card">
-            <div className="panel-card-header">
-              <span>📚</span><h3>Katalog</h3>
-              <span className="books-count">{books.length}</span>
-            </div>
-            {books.length === 0 ? (
-              <p className="panel-empty">Belum ada buku di katalog</p>
-            ) : (
-              <ul className="panel-list">
-                {books.map(b => (
-                  <li key={b.id} className={editing === b.id ? 'catalogue-active' : ''} onClick={() => isLoggedIn && handleEdit(b)} style={{ cursor: isLoggedIn ? 'pointer' : 'default' }}>
-                    {b.cover_image_url
-                      ? <img src={b.cover_image_url} alt="" className="panel-thumb" />
-                      : <div className="panel-thumb-placeholder">📖</div>
-                    }
-                    <div>
-                      <strong>{b.title}</strong>
-                      <span>{b.author_name}</span>
-                      {b.genre && <span className="catalogue-genre">{b.genre}</span>}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
-
-        {/* CENTER — FORM + BOOK LIST */}
-        <div className="main-center">
-          {showForm && isLoggedIn && (
+        {showForm && (
           <section className="form-section">
             <div className="section-header">
               <span className="section-header-icon">📖</span>
@@ -296,199 +282,90 @@ export default function BooksPage() {
                 <div className="form-right">
                   <div className="field">
                     <label htmlFor="title">Judul Buku *</label>
-                    <input
-                      id="title"
-                      value={form.title}
-                      onChange={(e) => updateField('title', e.target.value)}
-                      required
-                    />
+                    <input id="title" value={form.title} onChange={(e) => updateField('title', e.target.value)} required />
                   </div>
-
                   <div className="field">
                     <label htmlFor="subtitle">Subtitle</label>
-                    <input
-                      id="subtitle"
-                      value={form.subtitle}
-                      onChange={(e) => updateField('subtitle', e.target.value)}
-                    />
+                    <input id="subtitle" value={form.subtitle} onChange={(e) => updateField('subtitle', e.target.value)} />
                   </div>
-
                   <div className="field">
                     <label htmlFor="author_name">Pengarang *</label>
-                    <input
-                      id="author_name"
-                      value={form.author_name}
-                      onChange={(e) => updateField('author_name', e.target.value)}
-                      required
-                    />
+                    <input id="author_name" value={form.author_name} onChange={(e) => updateField('author_name', e.target.value)} required />
                   </div>
-
                   <div className="field">
                     <label htmlFor="genre">Genre</label>
-                    <select
-                      id="genre"
-                      value={form.genre}
-                      onChange={(e) => updateField('genre', e.target.value)}
-                    >
-                      <option value="">— Pilih Genre —</option>
-                      <option value="Fiction">Fiction</option>
-                      <option value="Non-Fiction">Non-Fiction</option>
-                      <option value="Novel">Novel</option>
-                      <option value="Romance">Romance</option>
-                      <option value="Thriller">Thriller</option>
-                      <option value="Mystery">Mystery</option>
-                      <option value="Science Fiction">Science Fiction</option>
-                      <option value="Fantasy">Fantasy</option>
-                      <option value="Horror">Horror</option>
-                      <option value="Biography">Biography</option>
-                      <option value="Self-Help">Self-Help</option>
-                      <option value="Business">Business</option>
-                      <option value="Education">Education</option>
-                      <option value="History">History</option>
-                      <option value="Poetry">Poetry</option>
-                      <option value="Religion">Religion</option>
-                      <option value="Children">Children</option>
-                      <option value="Comics">Comics</option>
-                      <option value="Cookbook">Cookbook</option>
-                      <option value="Other">Other</option>
+                    <select id="genre" value={form.genre} onChange={(e) => updateField('genre', e.target.value)}>
+                      <option value="">Pilih genre</option>
+                      <option>Fiksi</option><option>Non-Fiksi</option><option>Fantasi</option>
+                      <option>Misteri</option><option>Romansa</option><option>Sains</option>
+                      <option>Sejarah</option><option>Biografi</option><option>Self-Help</option>
+                      <option>Bisnis</option><option>Teknologi</option><option>Pendidikan</option>
+                      <option>Anak-Anak</option><option>Remaja</option><option>Puisi</option>
+                      <option>Komik</option><option>Agama</option><option>Filsafat</option>
+                      <option>Masakan</option><option>Lainnya</option>
                     </select>
                   </div>
-
-                  <div className="row">
+                  <div className="field-row">
+                    <div className="field">
+                      <label htmlFor="isbn">ISBN</label>
+                      <input id="isbn" value={form.isbn} onChange={(e) => updateField('isbn', e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="publisher">Penerbit</label>
+                      <input id="publisher" value={form.publisher} onChange={(e) => updateField('publisher', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="field-row">
+                    <div className="field">
+                      <label htmlFor="publication_date">Tanggal Terbit</label>
+                      <input id="publication_date" type="date" value={form.publication_date} onChange={(e) => updateField('publication_date', e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="page_count">Jumlah Halaman</label>
+                      <input id="page_count" type="number" value={form.page_count ?? ''} onChange={(e) => updateField('page_count', e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="language">Bahasa</label>
+                      <input id="language" value={form.language} onChange={(e) => updateField('language', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="field-row">
                     <div className="field">
                       <label htmlFor="book_width_cm">Lebar (cm)</label>
-                      <input
-                        id="book_width_cm"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={form.book_width_cm ?? ''}
-                        onChange={(e) => updateField('book_width_cm', e.target.value ? parseFloat(e.target.value) : '')}
-                      />
+                      <input id="book_width_cm" type="number" step="0.1" value={form.book_width_cm ?? ''} onChange={(e) => updateField('book_width_cm', e.target.value)} />
                     </div>
                     <div className="field">
                       <label htmlFor="book_height_cm">Tinggi (cm)</label>
-                      <input
-                        id="book_height_cm"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={form.book_height_cm ?? ''}
-                        onChange={(e) => updateField('book_height_cm', e.target.value ? parseFloat(e.target.value) : '')}
-                      />
+                      <input id="book_height_cm" type="number" step="0.1" value={form.book_height_cm ?? ''} onChange={(e) => updateField('book_height_cm', e.target.value)} />
                     </div>
                   </div>
-
                   <div className="field">
-                    <label htmlFor="page_count">Jumlah Halaman</label>
-                    <input
-                      id="page_count"
-                      type="number"
-                      min="1"
-                      value={form.page_count ?? ''}
-                      onChange={(e) => updateField('page_count', e.target.value ? parseInt(e.target.value) : '')}
-                    />
+                    <label htmlFor="description">Deskripsi <span className="word-counter">({wordCount}/100 kata)</span></label>
+                    <textarea id="description" rows={3} value={form.description} onChange={(e) => updateField('description', e.target.value)} />
                   </div>
                 </div>
               </div>
 
-              <div className="field">
-                <label htmlFor="description">Deskripsi Buku / Synopsis</label>
-                <textarea
-                  id="description"
-                  rows={4}
-                  value={form.description}
-                  onChange={(e) => updateField('description', e.target.value)}
-                  placeholder="Max 100 kata"
-                />
-                <span className={`word-count${wordCount > 100 ? ' over-limit' : ''}`}>
-                  {wordCount}/100 kata
-                </span>
-              </div>
-
-              <div className="field">
-                <label htmlFor="isbn">ISBN</label>
-                <input
-                  id="isbn"
-                  value={form.isbn}
-                  onChange={(e) => updateField('isbn', e.target.value)}
-                  placeholder="978-0-000-00000-0"
-                />
-              </div>
-
-              <div className="row">
+              <div className="form-layout" style={{ marginTop: '12px' }}>
                 <div className="field">
-                  <label htmlFor="publisher">Publisher</label>
-                  <input
-                    id="publisher"
-                    value={form.publisher}
-                    onChange={(e) => updateField('publisher', e.target.value)}
-                  />
+                  <label htmlFor="tokopedia_link">Link Tokopedia</label>
+                  <input id="tokopedia_link" type="url" value={form.tokopedia_link} onChange={(e) => updateField('tokopedia_link', e.target.value)} placeholder="https://..." />
                 </div>
                 <div className="field">
-                  <label htmlFor="publication_date">Tanggal Terbit</label>
-                  <input
-                    id="publication_date"
-                    type="date"
-                    value={form.publication_date}
-                    onChange={(e) => updateField('publication_date', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="field">
-                <label htmlFor="language">Bahasa</label>
-                <input
-                  id="language"
-                  value={form.language}
-                  onChange={(e) => updateField('language', e.target.value)}
-                />
-              </div>
-
-              <h3 className="section-title">Online Shop</h3>
-
-              <div className="row">
-                <div className="field">
-                  <label htmlFor="tokopedia_link">Tokopedia</label>
-                  <input
-                    id="tokopedia_link"
-                    type="url"
-                    value={form.tokopedia_link}
-                    onChange={(e) => updateField('tokopedia_link', e.target.value)}
-                    placeholder="https://tokopedia.link/..."
-                  />
+                  <label htmlFor="shopee_link">Link Shopee</label>
+                  <input id="shopee_link" type="url" value={form.shopee_link} onChange={(e) => updateField('shopee_link', e.target.value)} placeholder="https://..." />
                 </div>
                 <div className="field">
-                  <label htmlFor="shopee_link">Shopee</label>
-                  <input
-                    id="shopee_link"
-                    type="url"
-                    value={form.shopee_link}
-                    onChange={(e) => updateField('shopee_link', e.target.value)}
-                    placeholder="https://shopee.co.id/..."
-                  />
-                </div>
-              </div>
-
-              <div className="row">
-                <div className="field">
-                  <label htmlFor="whatsapp_link">WhatsApp</label>
-                  <input
-                    id="whatsapp_link"
-                    value={form.whatsapp_link}
-                    onChange={(e) => updateField('whatsapp_link', e.target.value)}
-                    placeholder="08xxxxxxxxxx"
-                  />
+                  <label htmlFor="whatsapp_link">No. WhatsApp</label>
+                  <input id="whatsapp_link" value={form.whatsapp_link} onChange={(e) => updateField('whatsapp_link', e.target.value)} placeholder="08xxx" />
                 </div>
                 <div className="field">
                   <label htmlFor="sales_link">Link Penjualan</label>
-                  <input
-                    id="sales_link"
-                    type="url"
-                    value={form.sales_link}
-                    onChange={(e) => updateField('sales_link', e.target.value)}
-                    placeholder="https://..."
-                  />
+                  <input id="sales_link" type="url" value={form.sales_link} onChange={(e) => updateField('sales_link', e.target.value)} placeholder="https://..." />
+                </div>
+                <div className="field">
+                  <label htmlFor="sales_count">Jumlah Terjual</label>
+                  <input id="sales_count" type="number" min="0" value={form.sales_count ?? ''} onChange={(e) => updateField('sales_count', e.target.value)} placeholder="0" />
                 </div>
               </div>
 
@@ -496,163 +373,46 @@ export default function BooksPage() {
               {success && <p className="success">{success}</p>}
 
               <div className="form-actions">
-                <button type="submit" disabled={uploading}>
-                  {uploading ? 'Mengunggah...' : editing ? 'Simpan Perubahan' : 'Tambah Buku'}
-                </button>
-                <button type="button" className="btn-secondary" onClick={handleCancel}>
-                  Batal
-                </button>
+                <button type="submit" disabled={uploading}>{uploading ? 'Mengunggah...' : editing ? 'Simpan Perubahan' : 'Tambah Buku'}</button>
+                <button type="button" className="btn-cancel" onClick={handleCancel}>Batal</button>
               </div>
             </form>
           </section>
-          )}
+        )}
 
-          <section className="books-section">
-            <div className="section-header">
-              <span className="section-header-icon">📚</span>
-              <h2>Daftar Buku</h2>
-              <span className="books-count">{books.length}</span>
-              {!showForm && isLoggedIn && (
-                <button className="btn-small" onClick={() => { setEditing(null); setForm(emptyBook); setCoverPreview(null); setShowForm(true) }}>+ Tambah Buku</button>
-              )}
-            </div>
-
-            {books.length === 0 ? (
-              <div className="empty">
-                <div className="empty-icon">📚</div>
-                <p>Belum ada buku ditambahkan.</p>
-              </div>
-            ) : (
-              <div className="book-list">
-                {books.map((book) => (
-                  <div key={book.id} className={`book-card${editing === book.id ? ' is-editing' : ''}`}>
-                    {book.cover_image_url
-                      ? <img src={book.cover_image_url} alt={book.title} className="book-cover-thumb" />
-                      : <div className="book-cover-placeholder">📖</div>
-                    }
-                    <div className="book-info">
-                      <h3>{book.title}</h3>
-                      {book.subtitle && <p className="book-subtitle">{book.subtitle}</p>}
-                      <p className="book-meta">oleh {book.author_name}</p>
-                      {book.isbn && <p className="book-meta">ISBN: {book.isbn}</p>}
-                      {(book.book_width_cm || book.book_height_cm) && (
-                        <p className="book-meta">📐 {book.book_width_cm} × {book.book_height_cm} cm</p>
-                      )}
-                      <div className="book-tags">
-                        {book.genre && <span className="book-tag">{book.genre}</span>}
-                        {book.language && <span className="book-tag">{book.language}</span>}
-                        {book.page_count && <span className="book-tag">{book.page_count} hal.</span>}
-                      </div>
-                    </div>
-                    {isLoggedIn && (
-                    <div className="book-actions">
-                      <button className="btn-small" onClick={() => handleEdit(book)}>Edit</button>
-                      <button className="btn-small btn-danger" onClick={() => handleDelete(book.id!)}>
-                        Hapus
-                      </button>
-                    </div>
-                    )}
+        {/* Book List — compact */}
+        {filteredBooks.length === 0 ? (
+          <div className="empty">
+            <div className="empty-icon">📚</div>
+            <p>{search ? 'Tidak ada buku ditemukan.' : 'Belum ada buku ditambahkan.'}</p>
+          </div>
+        ) : (
+          <div className="book-list">
+            {filteredBooks.map((book) => (
+              <div key={book.id} className={`book-card${editing === book.id ? ' is-editing' : ''}`}>
+                {book.cover_image_url
+                  ? <img src={book.cover_image_url} alt={book.title} className="book-cover-thumb" />
+                  : <div className="book-cover-placeholder">📖</div>
+                }
+                <div className="book-info">
+                  <h3>{book.title}</h3>
+                  {book.subtitle && <p className="book-subtitle">{book.subtitle}</p>}
+                  <p className="book-meta">oleh {book.author_name}</p>
+                  {book.isbn && <p className="book-meta">ISBN: {book.isbn}</p>}
+                  <div className="book-tags">
+                    {book.genre && <span className="book-tag">{book.genre}</span>}
+                    {book.language && <span className="book-tag">{book.language}</span>}
+                    {book.page_count && <span className="book-tag">{book.page_count} hal.</span>}
                   </div>
-                ))}
+                </div>
+                <div className="book-actions">
+                  <button className="btn-small" onClick={() => handleEdit(book)}>Edit</button>
+                  <button className="btn-small btn-danger" onClick={() => handleDelete(book.id!)}>Hapus</button>
+                </div>
               </div>
-            )}
-          </section>
-        </div>
-
-        {/* RIGHT PANEL — INFO CARDS */}
-        <aside className="side-panel panel-right">
-          <div className="panel-card">
-            <div className="panel-card-header">
-              <span>🏆</span><h3>Terlaris</h3>
-            </div>
-            {bestSellers.length === 0 ? (
-              <p className="panel-empty">Belum ada buku terbit</p>
-            ) : (
-              <ul className="panel-list">
-                {bestSellers.slice(0, 5).map(b => (
-                  <li key={b.id}>
-                    {b.cover_image_url && <img src={b.cover_image_url} alt="" className="panel-thumb" />}
-                    <div>
-                      <strong>{b.title}</strong>
-                      <span>{b.author_name}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            ))}
           </div>
-
-          <div className="panel-card">
-            <div className="panel-card-header">
-              <span>📅</span><h3>Segera Terbit</h3>
-            </div>
-            {upcoming.length === 0 ? (
-              <p className="panel-empty">Tidak ada buku mendatang</p>
-            ) : (
-              <ul className="panel-list">
-                {upcoming.slice(0, 5).map(b => (
-                  <li key={b.id}>
-                    {b.cover_image_url && <img src={b.cover_image_url} alt="" className="panel-thumb" />}
-                    <div>
-                      <strong>{b.title}</strong>
-                      <span>📅 {b.publication_date}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="panel-card">
-            <div className="panel-card-header">
-              <span>📞</span><h3>Kontak</h3>
-            </div>
-            {withContact.length === 0 ? (
-              <p className="panel-empty">Belum ada kontak</p>
-            ) : (
-              <ul className="panel-list">
-                {withContact.map(b => (
-                  <li key={b.id}>
-                    <div>
-                      <strong>{b.title}</strong>
-                      <a href={`https://wa.me/${b.whatsapp_link?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="panel-link">
-                        💬 {b.whatsapp_link}
-                      </a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="panel-card">
-            <div className="panel-card-header">
-              <span>🛒</span><h3>Toko Online</h3>
-            </div>
-            {withShop.length === 0 ? (
-              <p className="panel-empty">Belum ada link toko</p>
-            ) : (
-              <div className="shop-list">
-                {withShop.map(b => (
-                  <div key={b.id} className="shop-item">
-                    <h4>{b.title}</h4>
-                    <div className="shop-links">
-                      {b.tokopedia_link && (
-                        <a href={b.tokopedia_link} target="_blank" rel="noopener noreferrer" className="shop-link shop-tokopedia">🟢 Tokopedia</a>
-                      )}
-                      {b.shopee_link && (
-                        <a href={b.shopee_link} target="_blank" rel="noopener noreferrer" className="shop-link shop-shopee">🟠 Shopee</a>
-                      )}
-                      {b.sales_link && (
-                        <a href={b.sales_link} target="_blank" rel="noopener noreferrer" className="shop-link shop-sales">🔗 Sales</a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </aside>
+        )}
       </div>
     </div>
   )

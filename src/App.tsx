@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import BooksPage from './pages/BooksPage'
+import BookDetailPage from './pages/BookDetailPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -15,10 +16,8 @@ function App() {
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />}
-      />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/book/:id" element={<BookDetailPage />} />
       <Route
         path="/login"
         element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
@@ -29,7 +28,11 @@ function App() {
       />
       <Route
         path="/dashboard"
-        element={<BooksPage />}
+        element={
+          <ProtectedRoute>
+            <BooksPage />
+          </ProtectedRoute>
+        }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

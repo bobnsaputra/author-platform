@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 interface AuthContextType {
@@ -28,8 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  const navigate = useNavigate()
+
   const signOut = async () => {
     await supabase.auth.signOut()
+    navigate('/')
   }
 
   return (

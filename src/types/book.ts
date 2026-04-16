@@ -17,5 +17,6 @@ export interface Book {
   shopee_link?: string
   whatsapp_link?: string
   sales_link?: string
+  sales_count?: number
   created_at?: string
 }
