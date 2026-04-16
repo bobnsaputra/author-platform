@@ -221,6 +221,7 @@ export default function BooksPage() {
             <div className="topbar-icon">PJ</div>
             <div>
               <h1>Kelola Buku</h1>
+              <p className="topbar-tagline">CV. Pionir Jaya — Dashboard</p>
             </div>
           </div>
           <div className="topbar-search">
@@ -236,12 +237,34 @@ export default function BooksPage() {
         </div>
       </header>
 
-      {/* Compact Content */}
+      {/* Stats */}
+      <div className="manage-stats">
+        <div className="stat-card">
+          <span className="stat-number">{books.length}</span>
+          <span className="stat-label">Total Buku</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-number">{books.filter(b => b.cover_image_url).length}</span>
+          <span className="stat-label">Dengan Cover</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-number">{books.reduce((sum, b) => sum + (b.sales_count ?? 0), 0)}</span>
+          <span className="stat-label">Total Terjual</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-number">{new Set(books.map(b => b.genre).filter(Boolean)).size}</span>
+          <span className="stat-label">Genre</span>
+        </div>
+      </div>
+
+      {/* Content */}
       <div className="manage-content">
         <div className="manage-toolbar">
-          <span className="manage-count">{filteredBooks.length} buku</span>
+          <h2 className="manage-toolbar-title">📚 Daftar Buku {search && <span className="manage-filter-tag">"{search}"</span>}</h2>
           {!showForm && (
-            <button className="btn-small" onClick={() => { setEditing(null); setForm(emptyBook); setCoverPreview(null); setShowForm(true) }}>+ Tambah Buku</button>
+            <button className="btn-add" onClick={() => { setEditing(null); setForm(emptyBook); setCoverPreview(null); setShowForm(true) }}>
+              <span>+</span> Tambah Buku
+            </button>
           )}
         </div>
 
@@ -380,34 +403,37 @@ export default function BooksPage() {
           </section>
         )}
 
-        {/* Book List — compact */}
+        {/* Book List */}
         {filteredBooks.length === 0 ? (
           <div className="empty">
             <div className="empty-icon">📚</div>
             <p>{search ? 'Tidak ada buku ditemukan.' : 'Belum ada buku ditambahkan.'}</p>
           </div>
         ) : (
-          <div className="book-list">
+          <div className="manage-grid">
             {filteredBooks.map((book) => (
-              <div key={book.id} className={`book-card${editing === book.id ? ' is-editing' : ''}`}>
-                {book.cover_image_url
-                  ? <img src={book.cover_image_url} alt={book.title} className="book-cover-thumb" />
-                  : <div className="book-cover-placeholder">📖</div>
-                }
-                <div className="book-info">
+              <div key={book.id} className={`manage-card${editing === book.id ? ' is-editing' : ''}`}>
+                <div className="manage-card-cover">
+                  {book.cover_image_url
+                    ? <img src={book.cover_image_url} alt={book.title} />
+                    : <div className="manage-card-placeholder">📖</div>
+                  }
+                </div>
+                <div className="manage-card-body">
                   <h3>{book.title}</h3>
-                  {book.subtitle && <p className="book-subtitle">{book.subtitle}</p>}
-                  <p className="book-meta">oleh {book.author_name}</p>
-                  {book.isbn && <p className="book-meta">ISBN: {book.isbn}</p>}
-                  <div className="book-tags">
-                    {book.genre && <span className="book-tag">{book.genre}</span>}
-                    {book.language && <span className="book-tag">{book.language}</span>}
-                    {book.page_count && <span className="book-tag">{book.page_count} hal.</span>}
+                  {book.subtitle && <p className="manage-card-subtitle">{book.subtitle}</p>}
+                  <p className="manage-card-author">oleh {book.author_name}</p>
+                  {book.isbn && <p className="manage-card-meta">ISBN: {book.isbn}</p>}
+                  <div className="manage-card-tags">
+                    {book.genre && <span className="manage-card-tag">{book.genre}</span>}
+                    {book.language && <span className="manage-card-tag">{book.language}</span>}
+                    {book.page_count && <span className="manage-card-tag">{book.page_count} hal.</span>}
+                    {(book.sales_count ?? 0) > 0 && <span className="manage-card-tag tag-sales">🔥 {book.sales_count} terjual</span>}
                   </div>
                 </div>
-                <div className="book-actions">
-                  <button className="btn-small" onClick={() => handleEdit(book)}>Edit</button>
-                  <button className="btn-small btn-danger" onClick={() => handleDelete(book.id!)}>Hapus</button>
+                <div className="manage-card-actions">
+                  <button className="btn-edit" onClick={() => handleEdit(book)}>✏️ Edit</button>
+                  <button className="btn-delete" onClick={() => handleDelete(book.id!)}>🗑️ Hapus</button>
                 </div>
               </div>
             ))}

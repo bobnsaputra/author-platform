@@ -162,7 +162,7 @@ export default function LandingPage() {
           ) : (
             <div className="landing-book-grid">
               {bestSellers.slice(0, 8).map(b => (
-                <div key={b.id} className="landing-book-card">
+                <Link key={b.id} to={`/book/${b.id}`} className="landing-book-card">
                   {b.cover_image_url
                     ? <img src={b.cover_image_url} alt={b.title} className="landing-book-cover" />
                     : <div className="landing-book-cover-placeholder">📖</div>
@@ -172,7 +172,7 @@ export default function LandingPage() {
                     <p>{b.author_name}</p>
                     {b.genre && <span className="landing-book-genre">{b.genre}</span>}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -188,7 +188,7 @@ export default function LandingPage() {
           ) : (
             <div className="landing-book-grid">
               {latestBooks.map(b => (
-                <div key={b.id} className="landing-book-card">
+                <Link key={b.id} to={`/book/${b.id}`} className="landing-book-card">
                   {b.cover_image_url
                     ? <img src={b.cover_image_url} alt={b.title} className="landing-book-cover" />
                     : <div className="landing-book-cover-placeholder">📖</div>
@@ -198,7 +198,7 @@ export default function LandingPage() {
                     <p>{b.author_name}</p>
                     {b.genre && <span className="landing-book-genre">{b.genre}</span>}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

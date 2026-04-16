@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.4.0] — 2026-04-16
+
+### Added
+- **Landing page (`/`)**: Public page with header, slideshow, book sections, search, and footer
+- **Gallery slideshow**: Book cover + info card under header with auto-scroll, prev/next arrows, and dot navigation
+- **Buku Terlaris section**: Shows books sorted by `sales_count` DESC (only books with sales > 0)
+- **Buku Terbaru section**: Shows latest 8 books by `created_at`
+- **Search dropdown**: Header search bar with autocomplete — typing 2+ chars shows matching titles, clicking navigates to detail page
+- **Book detail page (`/book/:id`)**: Full book info — cover, title, author, metadata grid, description, and shop links (Tokopedia, Shopee, WhatsApp, sales link)
+- **`sales_count` field**: Added to Book type, form ("Jumlah Terjual"), and data handling
+- **Stats bar on dashboard**: 4 cards showing Total Buku, Dengan Cover, Total Terjual, and Genre count
+- **Book card grid on dashboard**: Visual cards with large cover images, title, tags, and sales badge
+- **Clickable book cards**: Landing page grid cards now link to `/book/:id`
+
+### Changed
+- **Slideshow replaces full-width carousel**: Gallery-style card with book cover on left and info on right, on a soft purple gradient background
+- **Dashboard redesign**: Card grid layout, accent-colored "Tambah Buku" button, split Edit/Hapus actions, matching purple gradient background, tagline in topbar
+- **Unified section background**: All landing sections share the same purple gradient; section titles have purple underline accent
+- **Search bar widened**: Landing header search max-width increased to 560px
+- **Sign out redirects to landing**: Clicking "Keluar" now navigates to `/` instead of `/login`
+- **Form field wrapping**: Link inputs and sales count now wrap properly inside the form box
+
+### Routing
+- `/` — LandingPage (public)
+- `/book/:id` — BookDetailPage (public)
+- `/login` — LoginPage (redirects to /dashboard if session)
+- `/register` — RegisterPage (redirects to /dashboard if session)
+- `/dashboard` — BooksPage (protected via ProtectedRoute)
+
 ## [0.3.0] — 2026-04-16
 
 ### Changed
